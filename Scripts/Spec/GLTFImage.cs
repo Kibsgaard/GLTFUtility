@@ -49,7 +49,7 @@ namespace Siccity.GLTFUtility {
 					path = "File://" + path;
 #endif
 					// TODO: Support linear/sRGB textures
-					using(UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(path, true)) {
+					using(UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(path, false)) {
 						UnityWebRequestAsyncOperation operation = uwr.SendWebRequest();
 						float progress = 0;
 						while (!operation.isDone) {
@@ -65,7 +65,13 @@ namespace Siccity.GLTFUtility {
 							Debug.LogError("GLTFImage.cs ToTexture2D() ERROR: " + uwr.error);
 						} else {
 							Texture2D tex = DownloadHandlerTexture.GetContent(uwr);
-							tex.name = Path.GetFileNameWithoutExtension(path);
+							yield return null;
+							if (tex != null)
+							{
+								if(tex.isReadable)
+									tex.Compress(false);
+								tex.name = Path.GetFileNameWithoutExtension(path);
+							}
 							onFinish(tex);
 						}
 						uwr.Dispose();
@@ -75,7 +81,13 @@ namespace Siccity.GLTFUtility {
 					if (!tex.LoadImage(bytes)) {
 						Debug.Log("mimeType not supported");
 						yield break;
-					} else onFinish(tex);
+					}
+
+					yield return null;
+					if(tex != null && tex.isReadable)
+						tex.Compress(false);
+
+					onFinish(tex);
 				}
 			}
 		}
